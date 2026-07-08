@@ -1,0 +1,2 @@
+"""Opportunity database module."""
+

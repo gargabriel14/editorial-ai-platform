@@ -1,0 +1,119 @@
+{
+  "name": "Editorial AI - Opportunity Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 24
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Daily opportunity scan",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [260, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/pipelines/opportunities/run",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"seed_topics\": [\n    \"guias de prompts de IA para profesores\",\n    \"habitos de productividad para freelancers\",\n    \"cuadernos mindfulness para adolescentes\"\n  ]\n}"
+      },
+      "id": "run-platform-pipeline",
+      "name": "Run platform pipeline",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [520, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json.opportunities[0].total_score}}",
+              "operation": "largerEqual",
+              "value2": 70
+            }
+          ]
+        }
+      },
+      "id": "score-threshold",
+      "name": "Top score >= 70",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [780, 300]
+    },
+    {
+      "parameters": {
+        "message": "={{'New editorial opportunity: ' + $json.opportunities[0].title_angle + ' score=' + $json.opportunities[0].total_score}}"
+      },
+      "id": "notify",
+      "name": "Notify team",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1040, 220]
+    },
+    {
+      "parameters": {},
+      "id": "wait-more-data",
+      "name": "Wait for more data",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1040, 380]
+    }
+  ],
+  "connections": {
+    "Daily opportunity scan": {
+      "main": [
+        [
+          {
+            "node": "Run platform pipeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run platform pipeline": {
+      "main": [
+        [
+          {
+            "node": "Top score >= 70",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Top score >= 70": {
+      "main": [
+        [
+          {
+            "node": "Notify team",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait for more data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
+

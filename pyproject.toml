@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "editorial-ai-platform"
+version = "0.1.0"
+description = "Modular AI-first operating platform for a digital publishing business."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Editorial AI" }]
+dependencies = []
+
+[project.optional-dependencies]
+api = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+]
+dev = [
+  "pytest>=8.0",
+]
+
+[project.scripts]
+editorial-ai = "editorial_ai.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
