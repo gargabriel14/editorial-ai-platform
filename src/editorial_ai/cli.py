@@ -4,19 +4,11 @@ from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 
+from editorial_ai.core.defaults import DEFAULT_SEED_TOPICS
 from editorial_ai.core.platform import build_default_platform
 from editorial_ai.core.storage import SQLiteOpportunityRepository
 from editorial_ai.core.utils import to_jsonable
-
-
-DEFAULT_SEEDS = (
-    "guias de prompts de IA para profesores",
-    "habitos de productividad para freelancers",
-    "cuadernos mindfulness para adolescentes",
-    "sistemas simples de finanzas para creativos",
-)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -37,6 +29,12 @@ def main(argv: list[str] | None = None) -> int:
     list_parser.add_argument("--min-score", type=float, default=0)
     list_parser.set_defaults(func=_list_opportunities)
 
+    web_parser = subparsers.add_parser("serve-web", help="Serve the local web dashboard.")
+    web_parser.add_argument("--host", default="127.0.0.1")
+    web_parser.add_argument("--port", type=int, default=8765)
+    web_parser.add_argument("--out", default="outputs/demo", help="Output directory for demo runs.")
+    web_parser.set_defaults(func=_serve_web)
+
     args = parser.parse_args(argv)
     return args.func(args)
 
@@ -49,7 +47,7 @@ def _init_db(args: argparse.Namespace) -> int:
 
 
 def _run_demo(args: argparse.Namespace) -> int:
-    seeds = tuple(args.seed) if args.seed else DEFAULT_SEEDS
+    seeds = tuple(args.seed) if args.seed else DEFAULT_SEED_TOPICS
     platform = build_default_platform(args.db)
     result = platform.run_opportunity_pipeline(seeds)
     output = platform.export_result(result, args.out)
@@ -71,6 +69,12 @@ def _list_opportunities(args: argparse.Namespace) -> int:
     return 0
 
 
+def _serve_web(args: argparse.Namespace) -> int:
+    from editorial_ai.web.server import run_server
+
+    run_server(host=args.host, port=args.port, db_path=args.db, output_dir=args.out)
+    return 0
+
+
 if __name__ == "__main__":
     raise SystemExit(main())
-

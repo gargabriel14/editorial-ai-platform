@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Editorial AI Control Room</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Editorial AI Platform</p>
+          <h1>Control Room</h1>
+        </div>
+        <div class="toolbar">
+          <label>
+            Min score
+            <input id="minScore" type="number" value="0" min="0" max="100" step="1" />
+          </label>
+          <button id="refreshBtn" type="button">Refresh</button>
+          <button id="runDemoBtn" type="button" class="primary">Run demo</button>
+        </div>
+      </header>
+
+      <section id="status" class="status" role="status">Loading dashboard...</section>
+
+      <section class="kpi-grid" aria-label="Indicadores principales">
+        <article class="kpi">
+          <span>Oportunidades</span>
+          <strong id="kpiOpportunities">0</strong>
+        </article>
+        <article class="kpi">
+          <span>Top score</span>
+          <strong id="kpiTopScore">0</strong>
+        </article>
+        <article class="kpi">
+          <span>Score medio</span>
+          <strong id="kpiAverageScore">0</strong>
+        </article>
+        <article class="kpi">
+          <span>Listas revision</span>
+          <strong id="kpiReady">0</strong>
+        </article>
+      </section>
+
+      <section class="workspace">
+        <aside class="panel list-panel">
+          <div class="panel-heading">
+            <h2>Pipeline</h2>
+            <span id="generatedAt"></span>
+          </div>
+          <div id="opportunityList" class="opportunity-list"></div>
+        </aside>
+
+        <section class="panel detail-panel">
+          <div class="panel-heading">
+            <h2 id="detailTitle">Selecciona una oportunidad</h2>
+            <span id="detailStatus"></span>
+          </div>
+
+          <div id="emptyState" class="empty-state">
+            Ejecuta la demo o selecciona una oportunidad para ver SEO, estructura,
+            marketing y publicacion.
+          </div>
+
+          <div id="detailContent" class="detail-content hidden">
+            <section class="detail-section">
+              <h3>Score</h3>
+              <div id="scoreBars" class="score-bars"></div>
+            </section>
+
+            <section class="detail-section">
+              <h3>SEO Amazon</h3>
+              <p id="seoSubtitle"></p>
+              <div id="keywordTags" class="tags"></div>
+              <ul id="seoBullets"></ul>
+            </section>
+
+            <section class="detail-section">
+              <h3>Estructura</h3>
+              <ol id="chapterList" class="chapter-list"></ol>
+            </section>
+
+            <section class="detail-section">
+              <h3>Marketing</h3>
+              <p id="positioning"></p>
+              <ul id="launchTasks"></ul>
+            </section>
+
+            <section class="detail-section">
+              <h3>Publicacion</h3>
+              <ul id="publicationChecklist"></ul>
+            </section>
+          </div>
+        </section>
+      </section>
+
+      <section class="panel protocol-panel">
+        <div class="panel-heading">
+          <h2>CEO ChatGPT + CTO Codex</h2>
+          <span>Sincronizacion operativa</span>
+        </div>
+        <div class="protocol-grid">
+          <div>
+            <h3>Fuente de verdad</h3>
+            <p id="protocolTruth"></p>
+          </div>
+          <div>
+            <h3>Cadencia</h3>
+            <p id="protocolCadence"></p>
+          </div>
+          <div>
+            <h3>Canales</h3>
+            <ul id="protocolChannels"></ul>
+          </div>
+          <div>
+            <h3>Decision packet</h3>
+            <ul id="decisionPacket"></ul>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
+

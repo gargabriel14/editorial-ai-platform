@@ -22,9 +22,12 @@ reutilizables y una capa API para conectar n8n, dashboards y agentes.
 
 ```powershell
 $env:PYTHONPATH="src"
-python -m editorial_ai.cli run-demo --db data/editorial_ai.sqlite --out outputs/demo
-python -m editorial_ai.cli list-opportunities --db data/editorial_ai.sqlite
+python -m editorial_ai.cli --db data/editorial_ai.sqlite run-demo --out outputs/demo
+python -m editorial_ai.cli --db data/editorial_ai.sqlite list-opportunities
+python -m editorial_ai.cli --db data/editorial_ai.sqlite serve-web --port 8765
 ```
+
+La web local queda disponible en `http://127.0.0.1:8765`.
 
 API opcional con FastAPI:
 
@@ -45,4 +48,5 @@ Documentacion principal:
 - [Automatizaciones](docs/automation_playbook.md)
 - [Integraciones API](docs/api_integrations.md)
 - [Modelo operativo CEO IA](docs/ai_ceo_operating_model.md)
-
+- [Comunicacion CEO-CTO](docs/ceo_cto_communication.md)
+- [Decision log](docs/decision_log.md)
