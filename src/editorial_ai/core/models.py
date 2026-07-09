@@ -93,6 +93,102 @@ class MarketingPlan:
 
 
 @dataclass(frozen=True)
+class KDPBookTypeRecommendation:
+    content_level: str
+    primary_format: str
+    secondary_formats: tuple[str, ...]
+    rationale: str
+
+
+@dataclass(frozen=True)
+class KDPBrandReadiness:
+    imprint_name: str
+    value_proposition: str
+    visual_identity: str
+    editorial_tone: str
+    target_audience: str
+    umbrella_strategy: str
+
+
+@dataclass(frozen=True)
+class KDPSeriesPotential:
+    can_be_series: bool
+    potential_titles_count: int
+    suggested_next_titles: tuple[str, ...]
+    complementary_products: tuple[str, ...]
+    rationale: str
+
+
+@dataclass(frozen=True)
+class KDPOptimizationPlan:
+    seo_title: str
+    seo_subtitle: str
+    backend_keywords: tuple[str, ...]
+    recommended_categories: tuple[str, ...]
+    alternative_categories: tuple[str, ...]
+    category_competition_level: str
+    category_risk: str
+    cover_primary_keyword: str
+
+
+@dataclass(frozen=True)
+class KDPLaunchPlan:
+    checklist_30_days: tuple[str, ...]
+    checklist_20_days: tuple[str, ...]
+    checklist_15_days: tuple[str, ...]
+    checklist_10_days: tuple[str, ...]
+    checklist_5_days: tuple[str, ...]
+    day_0: tuple[str, ...]
+    days_1_to_5: tuple[str, ...]
+    day_14: tuple[str, ...]
+    day_30: tuple[str, ...]
+    organic_actions: tuple[str, ...]
+    amazon_ads_actions: tuple[str, ...]
+    initial_budget_eur: float
+    metrics_to_track: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class KDPComplianceAssessment:
+    ai_content_disclosure: str
+    generic_quality_risk: str
+    copyright_trademark_risk: str
+    review_policy_warning: str
+    metadata_accuracy_validation: str
+    blocked_review_strategies: tuple[str, ...]
+    risk_level: str
+
+
+@dataclass(frozen=True)
+class KDPScoreBreakdown:
+    demand: float
+    competition: float
+    series_potential: float
+    production_ease: float
+    brand_potential: float
+    launch_potential: float
+    automation: float
+    kdp_compliance: float
+    total: float
+    explanation: str
+
+
+@dataclass(frozen=True)
+class KDPLaunchReadiness:
+    opportunity_id: str
+    book_type: KDPBookTypeRecommendation
+    brand: KDPBrandReadiness
+    series: KDPSeriesPotential
+    optimization: KDPOptimizationPlan
+    launch_plan: KDPLaunchPlan
+    compliance: KDPComplianceAssessment
+    score: KDPScoreBreakdown
+    recommendation: str
+    approval_gate_passed: bool
+    approval_blockers: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class AnalyticsEvent:
     event_name: str
     entity_id: str
@@ -107,4 +203,3 @@ class PipelineResult:
     structures: tuple[BookStructure, ...]
     seo_packs: tuple[SeoPack, ...]
     marketing_plans: tuple[MarketingPlan, ...]
-

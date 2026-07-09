@@ -18,10 +18,12 @@ const els = {
   kpiTopScore: document.querySelector("#kpiTopScore"),
   kpiAverageScore: document.querySelector("#kpiAverageScore"),
   kpiReady: document.querySelector("#kpiReady"),
+  kpiKdpScore: document.querySelector("#kpiKdpScore"),
   scoreBars: document.querySelector("#scoreBars"),
   seoSubtitle: document.querySelector("#seoSubtitle"),
   keywordTags: document.querySelector("#keywordTags"),
   seoBullets: document.querySelector("#seoBullets"),
+  kdpReadiness: document.querySelector("#kdpReadiness"),
   chapterList: document.querySelector("#chapterList"),
   positioning: document.querySelector("#positioning"),
   launchTasks: document.querySelector("#launchTasks"),
@@ -89,6 +91,7 @@ function render() {
   els.kpiTopScore.textContent = formatScore(kpis.top_score ?? 0);
   els.kpiAverageScore.textContent = formatScore(kpis.average_score ?? 0);
   els.kpiReady.textContent = kpis.ready_for_review ?? 0;
+  els.kpiKdpScore.textContent = formatScore(kpis.top_kdp_score ?? 0);
   els.generatedAt.textContent = dashboard.generated_at ? formatDate(dashboard.generated_at) : "";
 
   renderOpportunityList(items);
@@ -140,6 +143,7 @@ function renderDetail(item) {
 
   renderScores(opportunity);
   renderSeo(item.seo_pack);
+  renderKdpReadiness(item.kdp_launch_readiness);
   renderChapters(item.structure);
   renderMarketing(item.marketing_plan);
   renderPublication(item.publication);
@@ -172,6 +176,101 @@ function renderScores(opportunity) {
       `,
     )
     .join("");
+}
+
+function renderKdpReadiness(readiness) {
+  if (!readiness) {
+    els.kdpReadiness.innerHTML = "<p>No hay analisis KDP para esta oportunidad.</p>";
+    return;
+  }
+  const scoreRows = [
+    ["Demanda", readiness.score.demand],
+    ["Competencia", readiness.score.competition],
+    ["Serie", readiness.score.series_potential],
+    ["Produccion", readiness.score.production_ease],
+    ["Marca", readiness.score.brand_potential],
+    ["Lanzamiento", readiness.score.launch_potential],
+    ["Automatizacion", readiness.score.automation],
+    ["Compliance", readiness.score.kdp_compliance],
+  ];
+  els.kdpReadiness.innerHTML = `
+    <div class="kdp-summary">
+      <strong>${escapeHtml(readiness.recommendation)}</strong>
+      <span>KDP score ${formatScore(readiness.score.total)}</span>
+    </div>
+    <p>${escapeHtml(readiness.score.explanation)}</p>
+    ${
+      readiness.approval_gate_passed
+        ? '<p class="gate-ok">Gate de aprobacion: aprobado.</p>'
+        : `<p class="gate-risk">Gate de aprobacion: ${escapeHtml(readiness.approval_blockers.join(" "))}</p>`
+    }
+    <div class="score-bars compact">
+      ${scoreRows
+        .map(
+          ([label, score]) => `
+            <div class="score-row">
+              <span>${label}</span>
+              <span class="bar-track"><span class="bar-fill" style="width:${clamp(score)}%"></span></span>
+              <strong>${formatScore(score)}</strong>
+            </div>
+          `,
+        )
+        .join("")}
+    </div>
+    <div class="kdp-grid">
+      <section>
+        <h4>Tipo de libro</h4>
+        <p><strong>${escapeHtml(readiness.book_type.content_level)}</strong> | ${escapeHtml(
+          readiness.book_type.primary_format,
+        )}</p>
+        <p>${escapeHtml(readiness.book_type.rationale)}</p>
+      </section>
+      <section>
+        <h4>Marca editorial</h4>
+        <p><strong>${escapeHtml(readiness.brand.imprint_name)}</strong></p>
+        <p>${escapeHtml(readiness.brand.value_proposition)}</p>
+        <p>${escapeHtml(readiness.brand.visual_identity)}</p>
+      </section>
+      <section>
+        <h4>Serie</h4>
+        <p>${readiness.series.can_be_series ? "Puede convertirse en serie" : "Serie no validada"} · ${
+          readiness.series.potential_titles_count
+        } titulos potenciales</p>
+        ${renderInlineList(readiness.series.suggested_next_titles)}
+      </section>
+      <section>
+        <h4>Productos complementarios</h4>
+        ${renderInlineTags(readiness.series.complementary_products)}
+      </section>
+      <section>
+        <h4>KDP metadata</h4>
+        <p><strong>Portada:</strong> ${escapeHtml(readiness.optimization.cover_primary_keyword)}</p>
+        <p><strong>Categorias:</strong></p>
+        ${renderInlineList(readiness.optimization.recommended_categories)}
+        <p><strong>Riesgo:</strong> ${escapeHtml(readiness.optimization.category_risk)}</p>
+      </section>
+      <section>
+        <h4>7 backend keywords</h4>
+        ${renderInlineTags(readiness.optimization.backend_keywords)}
+      </section>
+      <section>
+        <h4>Plan de lanzamiento</h4>
+        <p><strong>Presupuesto inicial:</strong> ${formatCurrency(readiness.launch_plan.initial_budget_eur)}</p>
+        <p><strong>Metricas:</strong> ${escapeHtml(readiness.launch_plan.metrics_to_track.join(", "))}</p>
+        ${renderInlineList([
+          ...readiness.launch_plan.checklist_30_days.slice(0, 1),
+          ...readiness.launch_plan.day_0.slice(0, 1),
+          ...readiness.launch_plan.day_30.slice(0, 1),
+        ])}
+      </section>
+      <section>
+        <h4>Compliance KDP</h4>
+        <p><strong>Riesgo:</strong> ${escapeHtml(readiness.compliance.risk_level)}</p>
+        <p>${escapeHtml(readiness.compliance.ai_content_disclosure)}</p>
+        <p>${escapeHtml(readiness.compliance.review_policy_warning)}</p>
+      </section>
+    </div>
+  `;
 }
 
 function renderSeo(seoPack) {
@@ -218,6 +317,14 @@ function renderList(node, values) {
   node.innerHTML = values.map((value) => `<li>${escapeHtml(value)}</li>`).join("");
 }
 
+function renderInlineList(values) {
+  return `<ul>${values.map((value) => `<li>${escapeHtml(value)}</li>`).join("")}</ul>`;
+}
+
+function renderInlineTags(values) {
+  return `<div class="tags">${values.map((value) => `<span class="tag">${escapeHtml(value)}</span>`).join("")}</div>`;
+}
+
 function setBusy(isBusy, message = "") {
   els.refreshBtn.disabled = isBusy;
   els.runDemoBtn.disabled = isBusy;
@@ -247,6 +354,13 @@ function formatDate(value) {
   }).format(new Date(value));
 }
 
+function formatCurrency(value) {
+  return new Intl.NumberFormat("es", {
+    style: "currency",
+    currency: "EUR",
+  }).format(Number(value || 0));
+}
+
 function clamp(value) {
   return Math.max(0, Math.min(100, Number(value || 0)));
 }
@@ -259,4 +373,3 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
-

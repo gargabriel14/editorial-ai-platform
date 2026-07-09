@@ -12,6 +12,7 @@ from editorial_ai.core.storage import SQLiteOpportunityRepository
 from editorial_ai.core.utils import to_jsonable, utc_now_iso
 from editorial_ai.integrations.catalog import DEFAULT_API_INTEGRATIONS
 from editorial_ai.modules.book_structures.service import BookStructureService
+from editorial_ai.modules.kdp_launch.service import KDPLaunchReadinessService
 from editorial_ai.modules.marketing.service import MarketingService
 from editorial_ai.modules.publishing.service import PublishingService
 from editorial_ai.modules.seo_amazon.service import AmazonSEOService
@@ -26,6 +27,7 @@ def build_dashboard_data(db_path: str | Path, limit: int = 25, min_score: float 
     seo_service = AmazonSEOService()
     publishing_service = PublishingService()
     marketing_service = MarketingService()
+    kdp_service = KDPLaunchReadinessService()
 
     rows = []
     for opportunity in opportunities:
@@ -33,6 +35,7 @@ def build_dashboard_data(db_path: str | Path, limit: int = 25, min_score: float 
         seo_pack = seo_service.build_pack(opportunity)
         publication = publishing_service.package(opportunity, seo_pack)
         marketing = marketing_service.build_plan(opportunity)
+        kdp_readiness = kdp_service.assess(opportunity, seo_pack)
         rows.append(
             {
                 "opportunity": to_jsonable(opportunity),
@@ -40,15 +43,28 @@ def build_dashboard_data(db_path: str | Path, limit: int = 25, min_score: float 
                 "seo_pack": to_jsonable(seo_pack),
                 "publication": to_jsonable(publication),
                 "marketing_plan": to_jsonable(marketing),
+                "kdp_launch_readiness": to_jsonable(kdp_readiness),
             }
         )
 
     scores = [item.total_score for item in opportunities]
+    kdp_scores = [row["kdp_launch_readiness"]["score"]["total"] for row in rows]
+    recommendations = _count_recommendations(rows)
     kpis = {
         "opportunities": len(opportunities),
         "top_score": max(scores) if scores else 0,
         "average_score": round(mean(scores), 2) if scores else 0,
         "ready_for_review": len([score for score in scores if score >= 70]),
+        "top_kdp_score": max(kdp_scores) if kdp_scores else 0,
+        "kdp_ready_for_pilot": len(
+            [
+                row
+                for row in rows
+                if row["kdp_launch_readiness"]["recommendation"]
+                in {"Aprobar piloto", "Convertir en serie"}
+            ]
+        ),
+        "kdp_recommendations": recommendations,
     }
     return {
         "generated_at": utc_now_iso(),
@@ -57,6 +73,14 @@ def build_dashboard_data(db_path: str | Path, limit: int = 25, min_score: float 
         "integrations": to_jsonable(DEFAULT_API_INTEGRATIONS),
         "ceo_cto_protocol": build_ceo_cto_protocol(),
     }
+
+
+def _count_recommendations(rows: list[dict]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for row in rows:
+        recommendation = row["kdp_launch_readiness"]["recommendation"]
+        counts[recommendation] = counts.get(recommendation, 0) + 1
+    return counts
 
 
 def run_demo_and_build_dashboard(
@@ -104,4 +128,3 @@ def build_ceo_cto_protocol() -> dict:
             "Deadline",
         ],
     }
-

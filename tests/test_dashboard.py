@@ -20,5 +20,7 @@ class DashboardTest(unittest.TestCase):
             self.assertEqual(len(dashboard["items"]), 1)
             self.assertIn("seo_pack", dashboard["items"][0])
             self.assertIn("structure", dashboard["items"][0])
+            self.assertIn("kdp_launch_readiness", dashboard["items"][0])
+            self.assertIn("top_kdp_score", dashboard["kpis"])
             self.assertIn("ceo_cto_protocol", dashboard)
 

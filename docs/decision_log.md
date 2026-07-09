@@ -29,3 +29,19 @@
   CEO ChatGPT y CTO Codex.
 - Motivo: las decisiones quedan auditables, versionadas y conectadas al codigo.
 
+## ADR-0006: KDP Launch & Brand Readiness
+
+- Estado: aprobada
+- Issue CEO: #2
+- Decision: cada oportunidad editorial debe evaluarse tambien como activo KDP,
+  incluyendo tipo de libro, marca editorial, serie, metadata, lanzamiento,
+  compliance y recomendacion accionable.
+- Motivo: un nicho con buen score general puede fallar si no tiene estrategia de
+  serie, diferenciacion, compliance de resenas o metadata KDP defendible.
+- Scoring: demanda 20%, competencia 15%, serie 15%, produccion 10%, marca 15%,
+  lanzamiento 10%, automatizacion 10% y compliance 5%.
+- Guardrail: no aprobar piloto sin serie o producto complementario, salvo
+  justificacion comercial fuerte documentada.
+- Fuentes revisadas: Amazon KDP Content Guidelines, Customer Reviews, KDP
+  Categories y Metadata Guidelines.
+
