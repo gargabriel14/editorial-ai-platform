@@ -189,6 +189,34 @@ class KDPLaunchReadiness:
 
 
 @dataclass(frozen=True)
+class MarketIntelSignal:
+    niche: str
+    subniche: str
+    time_window: str
+    estimated_views: int
+    estimated_purchases: int
+    search_volume_score: float
+    purchase_intent_score: float
+    momentum_score: float
+    competition_score: float
+    kdp_fit_score: float
+    total_score: float
+    confidence: str
+    data_sources: tuple[str, ...]
+    rationale: str
+    recommended_action: str
+
+
+@dataclass(frozen=True)
+class MarketIntelSnapshot:
+    generated_at: str
+    provider: str
+    windows: tuple[str, ...]
+    top_signals: tuple[MarketIntelSignal, ...]
+    notes: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class AnalyticsEvent:
     event_name: str
     entity_id: str

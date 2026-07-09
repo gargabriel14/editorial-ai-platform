@@ -27,8 +27,33 @@ Funcion:
 3. Si la mejor oportunidad tiene score >= 70, dispara una notificacion.
 4. Si no, espera mas datos.
 
+## Entorno local
+
+La instancia local de n8n se define en `infra/n8n/docker-compose.yml`.
+
+```powershell
+.\scripts\n8n.ps1 start
+.\scripts\n8n.ps1 import-workflow
+.\scripts\n8n.ps1 logs
+```
+
+Para que el workflow pueda llamar a la plataforma desde el contenedor, arrancar
+la web/API local en el host:
+
+```powershell
+.\scripts\web.ps1 restart
+```
+
+El workflow llama a `http://host.docker.internal:8765/api/run-demo` y despues a
+`http://host.docker.internal:8765/api/market-intelligence/refresh`.
+
+Si cambias el workflow JSON, reimportalo:
+
+```powershell
+.\scripts\n8n.ps1 import-workflow
+```
+
 ## Proxima mejora
 
 Sustituir el nodo `noOp` de notificacion por Slack, email, Notion, Airtable o
 el sistema real que use la editorial.
-

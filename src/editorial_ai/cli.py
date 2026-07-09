@@ -29,6 +29,10 @@ def main(argv: list[str] | None = None) -> int:
     list_parser.add_argument("--min-score", type=float, default=0)
     list_parser.set_defaults(func=_list_opportunities)
 
+    market_parser = subparsers.add_parser("refresh-market", help="Refresh KDP market intelligence.")
+    market_parser.add_argument("--limit", type=int, default=10)
+    market_parser.set_defaults(func=_refresh_market)
+
     web_parser = subparsers.add_parser("serve-web", help="Serve the local web dashboard.")
     web_parser.add_argument("--host", default="127.0.0.1")
     web_parser.add_argument("--port", type=int, default=8765)
@@ -66,6 +70,14 @@ def _list_opportunities(args: argparse.Namespace) -> int:
         return 0
     for item in opportunities:
         print(f"{item.total_score:5.1f} | {item.id} | {item.title_angle} | {item.status}")
+    return 0
+
+
+def _refresh_market(args: argparse.Namespace) -> int:
+    from editorial_ai.web.dashboard import refresh_market_intelligence
+
+    data = refresh_market_intelligence(args.db, limit=args.limit)
+    print(json.dumps(data, indent=2, ensure_ascii=True))
     return 0
 
 

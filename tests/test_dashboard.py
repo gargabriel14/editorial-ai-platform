@@ -22,5 +22,7 @@ class DashboardTest(unittest.TestCase):
             self.assertIn("structure", dashboard["items"][0])
             self.assertIn("kdp_launch_readiness", dashboard["items"][0])
             self.assertIn("top_kdp_score", dashboard["kpis"])
+            self.assertIn("market_intelligence", dashboard)
+            self.assertIn("1y", dashboard["market_intelligence"]["top_by_window"])
             self.assertIn("ceo_cto_protocol", dashboard)
 

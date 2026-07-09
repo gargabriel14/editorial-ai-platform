@@ -13,6 +13,7 @@ from editorial_ai.core.utils import to_jsonable, utc_now_iso
 from editorial_ai.integrations.catalog import DEFAULT_API_INTEGRATIONS
 from editorial_ai.modules.book_structures.service import BookStructureService
 from editorial_ai.modules.kdp_launch.service import KDPLaunchReadinessService
+from editorial_ai.modules.market_intelligence.service import MarketIntelligenceService
 from editorial_ai.modules.marketing.service import MarketingService
 from editorial_ai.modules.publishing.service import PublishingService
 from editorial_ai.modules.seo_amazon.service import AmazonSEOService
@@ -70,6 +71,7 @@ def build_dashboard_data(db_path: str | Path, limit: int = 25, min_score: float 
         "generated_at": utc_now_iso(),
         "kpis": kpis,
         "items": rows,
+        "market_intelligence": build_market_intelligence_data(repository),
         "integrations": to_jsonable(DEFAULT_API_INTEGRATIONS),
         "ceo_cto_protocol": build_ceo_cto_protocol(),
     }
@@ -81,6 +83,32 @@ def _count_recommendations(rows: list[dict]) -> dict[str, int]:
         recommendation = row["kdp_launch_readiness"]["recommendation"]
         counts[recommendation] = counts.get(recommendation, 0) + 1
     return counts
+
+
+def build_market_intelligence_data(repository: SQLiteOpportunityRepository, limit: int = 10) -> dict:
+    service = MarketIntelligenceService(repository)
+    snapshot = service.latest_or_refresh()
+    return {
+        "generated_at": snapshot.generated_at,
+        "provider": snapshot.provider,
+        "windows": list(snapshot.windows),
+        "top_by_window": service.top_by_window(snapshot, limit=limit),
+        "notes": list(snapshot.notes),
+    }
+
+
+def refresh_market_intelligence(db_path: str | Path, limit: int = 10) -> dict:
+    repository = SQLiteOpportunityRepository(db_path)
+    repository.setup()
+    service = MarketIntelligenceService(repository)
+    snapshot = service.refresh()
+    return {
+        "generated_at": snapshot.generated_at,
+        "provider": snapshot.provider,
+        "windows": list(snapshot.windows),
+        "top_by_window": service.top_by_window(snapshot, limit=limit),
+        "notes": list(snapshot.notes),
+    }
 
 
 def run_demo_and_build_dashboard(

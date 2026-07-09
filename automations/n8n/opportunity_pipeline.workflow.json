@@ -1,4 +1,5 @@
 {
+  "id": "editorial-opportunity-pipeline",
   "name": "Editorial AI - Opportunity Pipeline",
   "nodes": [
     {
@@ -21,7 +22,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://host.docker.internal:8000/pipelines/opportunities/run",
+        "url": "http://host.docker.internal:8765/api/run-demo",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "{\n  \"seed_topics\": [\n    \"guias de prompts de IA para profesores\",\n    \"habitos de productividad para freelancers\",\n    \"cuadernos mindfulness para adolescentes\"\n  ]\n}"
@@ -34,10 +35,24 @@
     },
     {
       "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8765/api/market-intelligence/refresh",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"limit\": 10\n}"
+      },
+      "id": "refresh-market-intelligence",
+      "name": "Refresh KDP market intelligence",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [780, 300]
+    },
+    {
+      "parameters": {
         "conditions": {
           "number": [
             {
-              "value1": "={{$json.opportunities[0].total_score}}",
+              "value1": "={{$json.top_by_window['1y'][0].total_score}}",
               "operation": "largerEqual",
               "value2": 70
             }
@@ -48,17 +63,17 @@
       "name": "Top score >= 70",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
-      "position": [780, 300]
+      "position": [1040, 300]
     },
     {
       "parameters": {
-        "message": "={{'New editorial opportunity: ' + $json.opportunities[0].title_angle + ' score=' + $json.opportunities[0].total_score}}"
+        "message": "={{'Top KDP niche: ' + $json.top_by_window['1y'][0].subniche + ' score=' + $json.top_by_window['1y'][0].total_score}}"
       },
       "id": "notify",
       "name": "Notify team",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
-      "position": [1040, 220]
+      "position": [1300, 220]
     },
     {
       "parameters": {},
@@ -66,7 +81,7 @@
       "name": "Wait for more data",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
-      "position": [1040, 380]
+      "position": [1300, 380]
     }
   ],
   "connections": {
@@ -82,6 +97,17 @@
       ]
     },
     "Run platform pipeline": {
+      "main": [
+        [
+          {
+            "node": "Refresh KDP market intelligence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Refresh KDP market intelligence": {
       "main": [
         [
           {
@@ -116,4 +142,3 @@
     "executionOrder": "v1"
   }
 }
-

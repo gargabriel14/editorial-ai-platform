@@ -10,7 +10,11 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from editorial_ai.core.defaults import DEFAULT_SEED_TOPICS
-from editorial_ai.web.dashboard import build_dashboard_data, run_demo_and_build_dashboard
+from editorial_ai.web.dashboard import (
+    build_dashboard_data,
+    refresh_market_intelligence,
+    run_demo_and_build_dashboard,
+)
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -41,10 +45,29 @@ class EditorialDashboardHandler(SimpleHTTPRequestHandler):
             min_score = _to_float(query.get("min_score", ["0"])[0], 0)
             self._send_json(build_dashboard_data(self.db_path, limit=limit, min_score=min_score))
             return
+        if parsed.path == "/api/market-intelligence":
+            query = parse_qs(parsed.query)
+            limit = _to_int(query.get("limit", ["10"])[0], 10)
+            dashboard = build_dashboard_data(self.db_path, limit=25)
+            market = dashboard.get("market_intelligence", {})
+            if limit != 10:
+                market = refresh_market_intelligence(self.db_path, limit=limit)
+            self._send_json(market)
+            return
         return super().do_GET()
 
     def do_POST(self) -> None:
         parsed = urlparse(self.path)
+        if parsed.path == "/api/market-intelligence/refresh":
+            try:
+                payload = self._read_json_body()
+                limit = _to_int(str(payload.get("limit", 10)), 10)
+                data = refresh_market_intelligence(self.db_path, limit=limit)
+            except Exception as exc:  # pragma: no cover - exercised through browser/server runs
+                self._send_json({"error": str(exc)}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+                return
+            self._send_json(data)
+            return
         if parsed.path != "/api/run-demo":
             self.send_error(HTTPStatus.NOT_FOUND, "Unknown API endpoint")
             return
@@ -65,7 +88,10 @@ class EditorialDashboardHandler(SimpleHTTPRequestHandler):
         if length <= 0:
             return {}
         body = self.rfile.read(length)
-        return json.loads(body.decode("utf-8"))
+        try:
+            return json.loads(body.decode("utf-8"))
+        except json.JSONDecodeError:
+            return {}
 
     def _send_json(self, payload: dict, status: HTTPStatus = HTTPStatus.OK) -> None:
         encoded = json.dumps(payload, ensure_ascii=True).encode("utf-8")
@@ -112,4 +138,3 @@ def _to_float(value: str, fallback: float) -> float:
         return float(value)
     except (TypeError, ValueError):
         return fallback
-

@@ -17,6 +17,7 @@ Una API entra en la plataforma si mejora una de estas cosas:
 | OpenAI o LLM compatible | Outlines, QA, marketing, resumenes | estructuras, marketing, publicacion |
 | Google Trends / DataForSEO | Demanda, keywords, SERP | nichos, tendencias |
 | Keepa o proveedor Amazon | Precio, competencia, demanda | oportunidades, SEO |
+| DataForSEO Amazon | Search volume Amazon, related keywords | market intelligence |
 | Amazon KDP reports | Ventas, royalties, performance | analitica |
 | n8n | Orquestacion y aprobaciones | automatizaciones |
 
@@ -41,4 +42,3 @@ LLMProvider -> OpenAICompatibleProvider
 - Toda accion irreversible, como publicar, requiere aprobacion humana.
 - Las categorias y reglas de KDP deben validarse antes de publicar porque
   pueden cambiar.
-

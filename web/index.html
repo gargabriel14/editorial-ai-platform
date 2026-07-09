@@ -19,6 +19,7 @@
             <input id="minScore" type="number" value="0" min="0" max="100" step="1" />
           </label>
           <button id="refreshBtn" type="button">Refresh</button>
+          <button id="refreshMarketBtn" type="button">Refresh KDP market</button>
           <button id="runDemoBtn" type="button" class="primary">Run demo</button>
         </div>
       </header>
@@ -46,6 +47,33 @@
           <span>Top KDP score</span>
           <strong id="kpiKdpScore">0</strong>
         </article>
+      </section>
+
+      <section class="panel market-panel">
+        <div class="panel-heading">
+          <div>
+            <h2>KDP Market Intelligence</h2>
+            <span id="marketGeneratedAt">Waiting for market data</span>
+          </div>
+          <div id="marketWindowTabs" class="tabs" aria-label="Market windows"></div>
+        </div>
+        <div id="marketNotes" class="market-notes"></div>
+        <div class="table-wrap">
+          <table class="market-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nicho</th>
+                <th>Subnicho</th>
+                <th>Vistas est.</th>
+                <th>Compras est.</th>
+                <th>Score</th>
+                <th>Accion</th>
+              </tr>
+            </thead>
+            <tbody id="marketTableBody"></tbody>
+          </table>
+        </div>
       </section>
 
       <section class="workspace">

@@ -1,0 +1,2 @@
+"""KDP market intelligence module."""
+

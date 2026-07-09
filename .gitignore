@@ -14,4 +14,4 @@ data/*.sqlite-shm
 data/*.sqlite-wal
 outputs/
 .env
-
+infra/n8n/.env

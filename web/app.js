@@ -7,6 +7,7 @@ const els = {
   status: document.querySelector("#status"),
   minScore: document.querySelector("#minScore"),
   refreshBtn: document.querySelector("#refreshBtn"),
+  refreshMarketBtn: document.querySelector("#refreshMarketBtn"),
   runDemoBtn: document.querySelector("#runDemoBtn"),
   generatedAt: document.querySelector("#generatedAt"),
   opportunityList: document.querySelector("#opportunityList"),
@@ -19,6 +20,10 @@ const els = {
   kpiAverageScore: document.querySelector("#kpiAverageScore"),
   kpiReady: document.querySelector("#kpiReady"),
   kpiKdpScore: document.querySelector("#kpiKdpScore"),
+  marketGeneratedAt: document.querySelector("#marketGeneratedAt"),
+  marketWindowTabs: document.querySelector("#marketWindowTabs"),
+  marketNotes: document.querySelector("#marketNotes"),
+  marketTableBody: document.querySelector("#marketTableBody"),
   scoreBars: document.querySelector("#scoreBars"),
   seoSubtitle: document.querySelector("#seoSubtitle"),
   keywordTags: document.querySelector("#keywordTags"),
@@ -35,6 +40,7 @@ const els = {
 };
 
 els.refreshBtn.addEventListener("click", () => loadDashboard());
+els.refreshMarketBtn.addEventListener("click", () => refreshMarketIntelligence());
 els.minScore.addEventListener("change", () => loadDashboard());
 els.runDemoBtn.addEventListener("click", () => runDemo());
 
@@ -51,8 +57,36 @@ async function loadDashboard() {
     const dashboard = await response.json();
     state.dashboard = dashboard;
     state.selectedId = state.selectedId || dashboard.items?.[0]?.opportunity?.id || null;
+    state.selectedMarketWindow =
+      state.selectedMarketWindow || dashboard.market_intelligence?.windows?.[0] || "1y";
     render();
     setStatus(`Updated ${formatDate(dashboard.generated_at)}`);
+  } catch (error) {
+    setError(error.message);
+  } finally {
+    setBusy(false);
+  }
+}
+
+async function refreshMarketIntelligence() {
+  setBusy(true, "Refreshing KDP market intelligence...");
+  try {
+    const response = await fetch("/api/market-intelligence/refresh", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ limit: 10 }),
+    });
+    if (!response.ok) {
+      throw new Error(`Market refresh failed with HTTP ${response.status}`);
+    }
+    const market = await response.json();
+    state.dashboard = {
+      ...(state.dashboard || {}),
+      market_intelligence: market,
+    };
+    state.selectedMarketWindow = market.windows?.[0] || "1y";
+    renderMarketIntelligence(market);
+    setStatus("KDP market intelligence refreshed.");
   } catch (error) {
     setError(error.message);
   } finally {
@@ -95,6 +129,7 @@ function render() {
   els.generatedAt.textContent = dashboard.generated_at ? formatDate(dashboard.generated_at) : "";
 
   renderOpportunityList(items);
+  renderMarketIntelligence(dashboard.market_intelligence || {});
   renderProtocol(dashboard.ceo_cto_protocol || {});
 
   const selected = items.find((item) => item.opportunity.id === state.selectedId) || items[0];
@@ -104,6 +139,55 @@ function render() {
   } else {
     renderEmpty();
   }
+}
+
+function renderMarketIntelligence(market) {
+  const windows = market.windows || [];
+  const selected = state.selectedMarketWindow || windows[0] || "1y";
+  const rows = market.top_by_window?.[selected] || [];
+  els.marketGeneratedAt.textContent = market.generated_at
+    ? `${formatDate(market.generated_at)} · ${market.provider}`
+    : "No market snapshot yet";
+  els.marketWindowTabs.innerHTML = windows
+    .map(
+      (window) => `
+        <button type="button" class="${window === selected ? "active" : ""}" data-window="${window}">
+          ${windowLabel(window)}
+        </button>
+      `,
+    )
+    .join("");
+  for (const button of els.marketWindowTabs.querySelectorAll("button")) {
+    button.addEventListener("click", () => {
+      state.selectedMarketWindow = button.dataset.window;
+      renderMarketIntelligence(market);
+    });
+  }
+  els.marketNotes.innerHTML = (market.notes || [])
+    .map((note) => `<p>${escapeHtml(note)}</p>`)
+    .join("");
+  if (!rows.length) {
+    els.marketTableBody.innerHTML = `<tr><td colspan="7">No hay datos de mercado. Pulsa Refresh KDP market.</td></tr>`;
+    return;
+  }
+  els.marketTableBody.innerHTML = rows
+    .map(
+      (row) => `
+        <tr>
+          <td>${row.rank}</td>
+          <td>${escapeHtml(row.niche)}</td>
+          <td>
+            <strong>${escapeHtml(row.subniche)}</strong>
+            <small>${escapeHtml(row.rationale)}</small>
+          </td>
+          <td>${formatInteger(row.estimated_views)}</td>
+          <td>${formatInteger(row.estimated_purchases)}</td>
+          <td>${formatScore(row.total_score)}</td>
+          <td>${escapeHtml(row.recommended_action)}</td>
+        </tr>
+      `,
+    )
+    .join("");
 }
 
 function renderOpportunityList(items) {
@@ -327,6 +411,7 @@ function renderInlineTags(values) {
 
 function setBusy(isBusy, message = "") {
   els.refreshBtn.disabled = isBusy;
+  els.refreshMarketBtn.disabled = isBusy;
   els.runDemoBtn.disabled = isBusy;
   if (message) {
     setStatus(message);
@@ -345,6 +430,21 @@ function setError(message) {
 
 function formatScore(value) {
   return Number(value || 0).toFixed(1);
+}
+
+function formatInteger(value) {
+  return new Intl.NumberFormat("es").format(Number(value || 0));
+}
+
+function windowLabel(value) {
+  return (
+    {
+      "1y": "1 año",
+      "6m": "6 meses",
+      "1m": "1 mes",
+      "15d": "15 dias",
+    }[value] || value
+  );
 }
 
 function formatDate(value) {

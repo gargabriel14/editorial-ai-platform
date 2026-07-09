@@ -7,7 +7,7 @@ import sqlite3
 from contextlib import closing
 from pathlib import Path
 
-from editorial_ai.core.models import AnalyticsEvent, Opportunity
+from editorial_ai.core.models import AnalyticsEvent, MarketIntelSnapshot, Opportunity
 from editorial_ai.core.utils import ensure_parent, to_jsonable
 
 
@@ -38,13 +38,20 @@ class SQLiteOpportunityRepository:
                     CREATE INDEX IF NOT EXISTS idx_opportunities_score
                     ON opportunities(total_score DESC);
 
-                    CREATE TABLE IF NOT EXISTS analytics_events (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        event_name TEXT NOT NULL,
+                CREATE TABLE IF NOT EXISTS analytics_events (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    event_name TEXT NOT NULL,
                         entity_id TEXT NOT NULL,
                         value REAL NOT NULL,
                         metadata_json TEXT NOT NULL,
-                        created_at TEXT NOT NULL
+                    created_at TEXT NOT NULL
+                );
+
+                    CREATE TABLE IF NOT EXISTS market_intelligence_snapshots (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        provider TEXT NOT NULL,
+                        payload_json TEXT NOT NULL,
+                        generated_at TEXT NOT NULL
                     );
                     """
                 )
@@ -134,6 +141,34 @@ class SQLiteOpportunityRepository:
             for row in rows
         ]
 
+    def save_market_intelligence_snapshot(self, snapshot: MarketIntelSnapshot) -> None:
+        payload = json.dumps(to_jsonable(snapshot), ensure_ascii=True)
+        with closing(self._connect()) as conn:
+            with conn:
+                conn.execute(
+                    """
+                    INSERT INTO market_intelligence_snapshots (
+                        provider, payload_json, generated_at
+                    )
+                    VALUES (?, ?, ?)
+                    """,
+                    (snapshot.provider, payload, snapshot.generated_at),
+                )
+
+    def latest_market_intelligence_snapshot(self) -> MarketIntelSnapshot | None:
+        with closing(self._connect()) as conn:
+            row = conn.execute(
+                """
+                SELECT payload_json
+                FROM market_intelligence_snapshots
+                ORDER BY generated_at DESC, id DESC
+                LIMIT 1
+                """
+            ).fetchone()
+        if row is None:
+            return None
+        return self._row_to_market_snapshot(row["payload_json"])
+
     def _connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
@@ -144,3 +179,17 @@ class SQLiteOpportunityRepository:
         payload = json.loads(payload_json)
         payload["keywords"] = tuple(payload.get("keywords", ()))
         return Opportunity(**payload)
+
+    @staticmethod
+    def _row_to_market_snapshot(payload_json: str) -> MarketIntelSnapshot:
+        from editorial_ai.core.models import MarketIntelSignal
+
+        payload = json.loads(payload_json)
+        payload["windows"] = tuple(payload.get("windows", ()))
+        payload["notes"] = tuple(payload.get("notes", ()))
+        signals = []
+        for signal_payload in payload.get("top_signals", ()):
+            signal_payload["data_sources"] = tuple(signal_payload.get("data_sources", ()))
+            signals.append(MarketIntelSignal(**signal_payload))
+        payload["top_signals"] = tuple(signals)
+        return MarketIntelSnapshot(**payload)
